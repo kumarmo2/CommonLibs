@@ -1,7 +1,7 @@
 using System;
 using System.Threading.Tasks;
 
-namespace CommonLibs.GenericConnectionPooling
+namespace Core.CommonLibs.GenericConnectionPooling
 {
     public class AsyncConnectionPoolBuilder<T>
         where T : class

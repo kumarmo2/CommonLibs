@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace CommonLibs.GenericConnectionPooling
+namespace Core.CommonLibs.GenericConnectionPooling
 {
     public class ConnectionBox<T> : IConnectionBox<T>
     where T : class

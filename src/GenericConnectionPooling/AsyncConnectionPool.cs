@@ -3,7 +3,7 @@ using System.Threading;
 using System.Threading.Channels;
 using System.Threading.Tasks;
 
-namespace CommonLibs.GenericConnectionPooling
+namespace Core.CommonLibs.GenericConnectionPooling
 {
     internal class AsyncConnectionPool<T> : IAsyncConnectionPool<T>
     where T : class

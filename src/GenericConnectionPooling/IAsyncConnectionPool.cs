@@ -1,6 +1,6 @@
 using System.Threading.Tasks;
 
-namespace CommonLibs.GenericConnectionPooling
+namespace Core.CommonLibs.GenericConnectionPooling
 {
     public interface IAsyncConnectionPool<T>
     where T : class
