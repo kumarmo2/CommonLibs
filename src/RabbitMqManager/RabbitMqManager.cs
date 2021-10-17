@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 namespace Core.CommonLibs.RabbitMq
 {
     // Create a single manager for the application.
-    public class RabbitMqManager
+    public class RabbitMqManager : IRabbitMqManager
     {
         // For now, we will make a single connectionOnly.
         private readonly Lazy<IConnection> _connection;
