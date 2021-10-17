@@ -8,5 +8,7 @@ namespace Core.CommonLibs.RabbitMq
     {
 
         ValueTask<IConnectionBox<IModel>> GetChannel();
+        Task DeclareQueue(string queue, bool durable = true, bool exclusive = false,
+            bool autoDelete = false);
     }
 }
