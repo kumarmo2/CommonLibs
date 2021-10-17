@@ -2,6 +2,7 @@
 using System.Linq;
 using System.Threading.Tasks;
 using Core.CommonLibs.RabbitMq;
+using Microsoft.Extensions.DependencyInjection;
 
 namespace Core.ConsolePracticeApp
 {
@@ -10,7 +11,11 @@ namespace Core.ConsolePracticeApp
         static async Task Main(string[] args)
         {
             Console.WriteLine("Hello World!");
-            var manager = new RabbitMqManager();
+            var services = new ServiceCollection();
+            services.AddRabbitMq();
+
+            var serviceProvider = services.BuildServiceProvider();
+            var manager = serviceProvider.GetService<IRabbitMqManager>();
 
             var tasks = Enumerable.Range(0, 10).Select(async i =>
             {

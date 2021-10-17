@@ -1,7 +1,6 @@
-using Core.CommonLibs.RabbitMq;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Core.CommonLibs
+namespace Core.CommonLibs.RabbitMq
 {
     public static class IServiceCollectionExtensions
     {
