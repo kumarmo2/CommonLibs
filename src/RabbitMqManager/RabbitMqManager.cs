@@ -30,5 +30,16 @@ namespace Core.CommonLibs.RabbitMq
         }
 
         public ValueTask<IConnectionBox<IModel>> GetChannel() => _channelFactory.GetConnection();
+
+        public async Task DeclareQueue(string queue, bool durable = true, bool exclusive = false,
+            bool autoDelete = false)
+        {
+            await using (var channelBox = await _channelFactory.GetConnection())
+            {
+                var channel = channelBox.Connection;
+                channel.QueueDeclare(queue, durable, exclusive, autoDelete);
+            }
+        }
+
     }
 }
