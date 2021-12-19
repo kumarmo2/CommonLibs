@@ -5,12 +5,8 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Grpc.Net.ClientFactory" Version="2.38.0" />
     <PackageReference Include="Microsoft.Extensions.DependencyInjection" Version="5.0.2" />
-    <PackageReference Include="RabbitMQ.client" Version="6.2.2" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="..\GenericConnectionPooling\GenericConnectionPooling.csproj" />
   </ItemGroup>
 
 </Project>
