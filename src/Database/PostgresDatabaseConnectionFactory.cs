@@ -13,6 +13,7 @@ namespace CommonLibs.Database
         }
         public IDbConnection GetDbConnection()
         {
+            // TODO: added connection pooling.
             return new NpgsqlConnection(_dbOptions.ConnectionString);
         }
     }
