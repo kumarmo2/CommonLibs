@@ -3,6 +3,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Core.CommonLibs.RabbitMq;
 using Microsoft.Extensions.DependencyInjection;
+using CommonLibs.CassandraDB;
 
 namespace Core.ConsolePracticeApp
 {
