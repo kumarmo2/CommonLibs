@@ -3,6 +3,8 @@
   <ItemGroup>
     <ProjectReference Include="..\RabbitMqManager\RabbitMqManager.csproj" />
     <ProjectReference Include="..\CassandraDB\CassandraDB.csproj" />
+    <ProjectReference Include="..\RedisCache\RedisCache.csproj" />
+    <PackageReference Include="protobuf-net" Version="3.0.101" />
   </ItemGroup>
 
   <ItemGroup>
