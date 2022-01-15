@@ -5,6 +5,8 @@ using System.Threading.Tasks;
 // using Newtonsoft.Json;
 using ProtoBuf;
 using System.IO;
+using System.Collections.Generic;
+using System.Linq;
 
 namespace CommonLibs.RedisCache
 {
@@ -57,6 +59,96 @@ namespace CommonLibs.RedisCache
             return DeserializeRedisValue<T>(redisValue);
         }
 
+        public async Task RPush<T>(string key, T value)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var serializedValue = Serialize(value);
+            await cache.ListRightPushAsync(key, serializedValue);
+        }
+
+        public async Task LPush<T>(string key, T value)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var serializedValue = Serialize(value);
+            await cache.ListLeftPushAsync(key, serializedValue);
+        }
+        public async Task LPush<T>(string key, IEnumerable<T> values)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var serializedValues = values.Select(value => new RedisValue(Serialize(value))).ToArray();
+            // var serializedValue = Serialize(value);
+            await cache.ListLeftPushAsync(key, serializedValues);
+        }
+
+        public async Task<long> LLen(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            return await cache.ListLengthAsync(key);
+        }
+
+        public async Task<IEnumerable<T>> LRange<T>(string key, long start = 0, long stop = -1)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var values = await cache.ListRangeAsync(key, start, stop);
+            if (values is null)
+            {
+                return Enumerable.Empty<T>();
+            }
+            return values.Select(value => DeserializeRedisValue<T>(value));
+        }
+
+        public async Task<T> RPop<T>(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var value = await cache.ListRightPopAsync(key);
+
+            if (value == RedisValue.Null)
+            {
+                return default(T);
+            }
+            return DeserializeRedisValue<T>(value);
+        }
+
+        public async Task<T> LPop<T>(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var value = await cache.ListLeftPopAsync(key);
+
+            if (value == RedisValue.Null)
+            {
+                return default(T);
+            }
+            return DeserializeRedisValue<T>(value);
+        }
+
         private T DeserializeRedisValue<T>(RedisValue redisValue)
         {
             // TODO: need to check that it doesn't fail for null values.
@@ -106,6 +198,18 @@ namespace CommonLibs.RedisCache
             await cache.KeyDeleteAsync(key);
         }
 
+        private string Serialize<T>(T value)
+        {
+            string serialized = null;
+
+            using (var stream = new MemoryStream())
+            {
+                Serializer.Serialize(stream, value);
+                serialized = Convert.ToBase64String(stream.ToArray());
+            }
+            return serialized;
+        }
+
         public async Task SetRecord<T>(string key, T value)
         {
             if (string.IsNullOrWhiteSpace(key))
@@ -117,13 +221,8 @@ namespace CommonLibs.RedisCache
                 return;
             }
             var cache = _redis.Value.GetDatabase();
-            using (var stream = new MemoryStream())
-            {
-                Serializer.Serialize(stream, value);
-                // base64 encoding can be used to represent any binary data.
-                var serialized = Convert.ToBase64String(stream.ToArray());
-                await cache.StringSetAsync(key, serialized);
-            }
+            var serialized = Serialize(value);
+            await cache.StringSetAsync(key, serialized);
         }
     }
 }
