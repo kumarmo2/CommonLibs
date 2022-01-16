@@ -102,6 +102,59 @@ namespace CommonLibs.RedisCache
             return await cache.ListLengthAsync(key);
         }
 
+        // Returns:
+        //     True if the specified member was not already present in the set, else False
+        public async Task<bool> SAdd<T>(string key, T value)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var serialized = Serialize(value);
+            return await cache.SetAddAsync(key, serialized);
+        }
+
+        public async Task<long> SCard(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            return await cache.SetLengthAsync(key);
+        }
+
+        public async Task<T> SPop<T>(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var value = await cache.SetPopAsync(key);
+            if (value == RedisValue.Null)
+            {
+                return default(T);
+            }
+            return DeserializeRedisValue<T>(value);
+        }
+
+        public async Task<IEnumerable<T>> SMembers<T>(string key)
+        {
+            if (string.IsNullOrWhiteSpace(key))
+            {
+                throw new ArgumentException($"'{nameof(key)}' cannot be null or empty", nameof(key));
+            }
+            var cache = _redis.Value.GetDatabase();
+            var values = await cache.SetMembersAsync(key);
+            if (values is null)
+            {
+                return Enumerable.Empty<T>();
+            }
+            return values.Select(value => DeserializeRedisValue<T>(value));
+        }
+
         public async Task<IEnumerable<T>> LRange<T>(string key, long start = 0, long stop = -1)
         {
             if (string.IsNullOrWhiteSpace(key))

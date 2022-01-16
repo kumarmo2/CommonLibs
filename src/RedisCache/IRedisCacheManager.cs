@@ -19,5 +19,9 @@ namespace CommonLibs.RedisCache
         Task<IEnumerable<T>> LRange<T>(string key, long start = 0, long stop = -1);
         Task<T> LPop<T>(string key);
         Task<T> RPop<T>(string key);
+        Task<bool> SAdd<T>(string key, T value);
+        Task<long> SCard(string key);
+        Task<T> SPop<T>(string key);
+        Task<IEnumerable<T>> SMembers<T>(string key);
     }
 }
