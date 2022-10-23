@@ -20,6 +20,12 @@ public class AuthorizationFilter : IAsyncAuthorizationFilter
     {
       return;
     }
+    context.HttpContext.Request.Headers.TryGetValue("userid", out var values);
+    if(!values.Any())
+    {
+      throw new Exception("for authorization, userId must be present in the request headers");
+    }
+    var userId = values[0];
 
     var rules = attributes.Select(attribute => {
         return new ApiRateLimitConfig
@@ -27,7 +33,7 @@ public class AuthorizationFilter : IAsyncAuthorizationFilter
           MaxRequests = attribute.MaxRequests,
           Unit = attribute.Unit,
           Window = attribute.Window,
-          UniqueClientIdentifier = "1",
+          UniqueClientIdentifier = userId,
           Path = context.HttpContext.Request.Path,
         }; });
 
