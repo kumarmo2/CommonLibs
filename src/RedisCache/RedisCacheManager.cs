@@ -41,6 +41,18 @@ namespace CommonLibs.RedisCache
 
         public IDatabase GetDatabase() => _redis.Value.GetDatabase();
 
+        public async Task<long> Increment(string key)
+        {
+            var db = _redis.Value.GetDatabase();
+            return await db.StringIncrementAsync(key);
+        }
+
+        public async Task<long> Decrement(string key)
+        {
+            var db = _redis.Value.GetDatabase();
+            return await db.StringDecrementAsync(key);
+        }
+
         public async Task<T> GetRecord<T>(string key)
         {
             if (string.IsNullOrEmpty(key))

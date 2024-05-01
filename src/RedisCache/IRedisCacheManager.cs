@@ -23,5 +23,7 @@ namespace CommonLibs.RedisCache
         Task<long> SCard(string key);
         Task<T> SPop<T>(string key);
         Task<IEnumerable<T>> SMembers<T>(string key);
+        Task<long> Increment(string key);
+        Task<long> Decrement(string key);
     }
 }
