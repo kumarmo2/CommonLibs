@@ -1,27 +1,31 @@
 using Microsoft.Extensions.Options;
 using Cassandra;
+using System;
+using System.Threading.Tasks;
 
-namespace CommonLibs.CassandraDB;
-public class CassandraConnectionFactory : ICassandraConnectionFactory
+namespace CommonLibs.CassandraDB
 {
-    private readonly CassandraDBOptions _dbOptions;
-    private Lazy<Task<ISession>> _lazySession;
-
-    public CassandraConnectionFactory(IOptions<CassandraDBOptions> options)
+    public class CassandraConnectionFactory : ICassandraConnectionFactory
     {
-        _dbOptions = options.Value;
-        _lazySession = new Lazy<Task<ISession>>(async () =>
+        private readonly CassandraDBOptions _dbOptions;
+        private Lazy<Task<ISession>> _lazySession;
+
+        public CassandraConnectionFactory(IOptions<CassandraDBOptions> options)
         {
-            var cluster = Cluster.Builder()
-                .AddContactPoint(_dbOptions.ConnectionString)
-                .Build();
-            return await cluster.ConnectAsync();
-        });
-    }
+            _dbOptions = options.Value;
+            _lazySession = new Lazy<Task<ISession>>(async () =>
+                    {
+                        var cluster = Cluster.Builder()
+                        .AddContactPoint(_dbOptions.ConnectionString)
+                        .Build();
+                        return await cluster.ConnectAsync();
+                    });
+        }
 
-    public async Task<ISession> GetConnection()
-    {
-        return await _lazySession.Value;
+        public async Task<ISession> GetConnection()
+        {
+            return await _lazySession.Value;
+        }
     }
 }
 
