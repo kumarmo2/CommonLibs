@@ -1,7 +1,7 @@
-namespace CommonLibs.Utils.Id;
-
-public interface IIdFactory
+namespace CommonLibs.Utils.Id
 {
-    long Next();
+    public interface IIdFactory
+    {
+        long Next();
+    }
 }
-

@@ -1,11 +1,12 @@
-namespace CommonLibs.Utils.Id;
 using Microsoft.Extensions.DependencyInjection;
 
-
-public static class IdServiceClassExtensions
+namespace CommonLibs.Utils.Id
 {
-    public static void AddIdFactory(this IServiceCollection services)
+    public static class IdServiceClassExtensions
     {
-        services.AddSingleton<IIdFactory, IdFactory>();
+        public static void AddIdFactory(this IServiceCollection services)
+        {
+            services.AddSingleton<IIdFactory, IdFactory>();
+        }
     }
 }

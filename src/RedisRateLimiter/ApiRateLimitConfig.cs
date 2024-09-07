@@ -1,63 +1,73 @@
 using CommonLibs.RedisCache;
 using StackExchange.Redis;
+using System.Linq;
+using System.Collections.Generic;
+using System.Threading.Tasks;
 
-namespace CommonLibs.RedisRateLimiter;
-
-
-public enum TimeUnit
+namespace CommonLibs.RedisRateLimiter
 {
-  S = 1,
-  M = 60,
-  H = 3600,
-  D = 86400
-}
-
-public class ApiRateLimitConfig
-{
-  // TODO: impose restriction on setters;
-  public int Window {get; set;}
-  public TimeUnit Unit {get; set;}
-  public int MaxRequests { get; set;}
-  public string? Path {get; set;}
-  public string? UniqueClientIdentifier {get; set;}
-  private int _windowInSeconds = 0;
-  private string? _redisConfigKeyForClient = null;
-
-  public int WindowInSeconds { get {
-    if(_windowInSeconds > 0) {
-      return _windowInSeconds;
+    public enum TimeUnit
+    {
+        S = 1,
+        M = 60,
+        H = 3600,
+        D = 86400
     }
-    _windowInSeconds = (int)Unit * Window;
-    return _windowInSeconds;
-  }}
 
-  public string RedisConfigKeyForClient {
-    get {
-      if(_redisConfigKeyForClient is not null) {
-        return _redisConfigKeyForClient;
-      }
-      _redisConfigKeyForClient = $"client:{UniqueClientIdentifier}|path:{Path}|window:{WindowInSeconds}";
-      return _redisConfigKeyForClient;
+    public class ApiRateLimitConfig
+    {
+        // TODO: impose restriction on setters;
+        public int Window { get; set; }
+        public TimeUnit Unit { get; set; }
+        public int MaxRequests { get; set; }
+        public string? Path { get; set; }
+        public string? UniqueClientIdentifier { get; set; }
+        private int _windowInSeconds = 0;
+        private string? _redisConfigKeyForClient = null;
+
+        public int WindowInSeconds
+        {
+            get
+            {
+                if (_windowInSeconds > 0)
+                {
+                    return _windowInSeconds;
+                }
+                _windowInSeconds = (int)Unit * Window;
+                return _windowInSeconds;
+            }
+        }
+
+        public string RedisConfigKeyForClient
+        {
+            get
+            {
+                if (_redisConfigKeyForClient != null)
+                {
+                    return _redisConfigKeyForClient;
+                }
+                _redisConfigKeyForClient = $"client:{UniqueClientIdentifier}|path:{Path}|window:{WindowInSeconds}";
+                return _redisConfigKeyForClient;
+            }
+        }
+
+
     }
-  }
 
+    public class ThrottleResponse
+    {
+        public bool ShouldThrottle { get; set; }
+    }
 
-}
+    public interface IApiThrottler
+    {
+        Task<ThrottleResponse> ShouldThrottle(IEnumerable<ApiRateLimitConfig> rateLimitRules);
+    }
 
-public class ThrottleResponse
-{
-  public bool ShouldThrottle {get; set;}
-}
-
-public interface IApiThrottler
-{
-  Task<ThrottleResponse> ShouldThrottle(IEnumerable<ApiRateLimitConfig> rateLimitRules);
-}
-
-public class Throttler: IApiThrottler
-{
-  private readonly IRedisCacheManager _redisCacheManager;
-  private const string _shouldThrottleLuaScript = @"
+    public class Throttler : IApiThrottler
+    {
+        private readonly IRedisCacheManager _redisCacheManager;
+        private const string _shouldThrottleLuaScript = @"
     local current_time = redis.call('TIME')
     local num_windows = ARGV[1]
     for i=2, num_windows*2, 2 do
@@ -80,26 +90,27 @@ public class Throttler: IApiThrottler
     return 0
     ";
 
-  public Throttler(IRedisCacheManager redisCacheManager)
-  {
-    _redisCacheManager = redisCacheManager;
-  }
+        public Throttler(IRedisCacheManager redisCacheManager)
+        {
+            _redisCacheManager = redisCacheManager;
+        }
 
-  public async Task<ThrottleResponse> ShouldThrottle(IEnumerable<ApiRateLimitConfig> rateLimitRules)
-  {
-    var orederRules = rateLimitRules.OrderBy(rule => rule.WindowInSeconds).ToList();
-     var keys = orederRules.Select(x => new RedisKey(x.RedisConfigKeyForClient)).ToArray();
-    var args = new List<RedisValue>{orederRules.Count()};
-    foreach (var rule in orederRules)
-    {
-        args.Add(rule.WindowInSeconds);
-        args.Add(rule.MaxRequests);
+        public async Task<ThrottleResponse> ShouldThrottle(IEnumerable<ApiRateLimitConfig> rateLimitRules)
+        {
+            var orederRules = rateLimitRules.OrderBy(rule => rule.WindowInSeconds).ToList();
+            var keys = orederRules.Select(x => new RedisKey(x.RedisConfigKeyForClient)).ToArray();
+            var args = new List<RedisValue> { orederRules.Count() };
+            foreach (var rule in orederRules)
+            {
+                args.Add(rule.WindowInSeconds);
+                args.Add(rule.MaxRequests);
+            }
+            var shouldThrottle = (int)await _redisCacheManager.GetDatabase().ScriptEvaluateAsync(_shouldThrottleLuaScript, keys, args.ToArray()) == 1;
+            return new ThrottleResponse
+            {
+                ShouldThrottle = shouldThrottle
+            };
+        }
     }
-    var shouldThrottle = (int) await _redisCacheManager.GetDatabase().ScriptEvaluateAsync(_shouldThrottleLuaScript, keys,args.ToArray()) == 1;
-    return new ThrottleResponse
-    {
-      ShouldThrottle = shouldThrottle
-    };
-  }
-}
 
+}

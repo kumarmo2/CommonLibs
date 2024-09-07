@@ -1,7 +1,9 @@
-namespace CommonLibs.CassandraDB;
-
-public class CassandraDBOptions
+namespace CommonLibs.CassandraDB
 {
-    public static string Key { get; } = "Cassandra";
-    public string ConnectionString {get; set;}
+
+    public class CassandraDBOptions
+    {
+        public static string Key { get; } = "Cassandra";
+        public string ConnectionString { get; set; }
+    }
 }
